@@ -39,6 +39,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 
 public class MainActivity extends AppCompatActivity  implements SensorEventListener {
@@ -54,18 +55,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         setContentView(R.layout.activity_main);
         cacheManager=new CacheManager(getApplicationContext());
 
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-//        sensorManager1 = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-        assert sensorManager != null;
-        accelerometer =sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-//        assert sensorManager1 != null;
-        gyroscope=  sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-
-        sensorManager.registerListener(MainActivity.this,accelerometer,SensorManager.SENSOR_DELAY_NORMAL);
-
-        sensorManager.registerListener(MainActivity.this,gyroscope,SensorManager.SENSOR_DELAY_NORMAL);
     }
 
 
@@ -95,6 +85,30 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
+    public void OnStopAction(View view) {
+
+        sensorManager.unregisterListener(this);
+
+    }
+
+    public void OnStartAction(View view) {
+
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+//        sensorManager1 = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        assert sensorManager != null;
+        accelerometer =sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+//        assert sensorManager1 != null;
+        gyroscope=  sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+
+        sensorManager.registerListener(MainActivity.this,accelerometer,SensorManager.SENSOR_DELAY_NORMAL);
+
+        sensorManager.registerListener(MainActivity.this,gyroscope,SensorManager.SENSOR_DELAY_NORMAL);
+
 
     }
 }
