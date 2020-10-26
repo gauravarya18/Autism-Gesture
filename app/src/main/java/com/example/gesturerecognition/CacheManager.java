@@ -2,8 +2,12 @@ package com.example.gesturerecognition;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class CacheManager extends SQLiteOpenHelper {
 
@@ -50,6 +54,32 @@ public class CacheManager extends SQLiteOpenHelper {
         long result = db.insert(this.tableName, null, contentValues);
         return result;
     }
+    private Cursor getData(SQLiteDatabase db){
 
+        String query = "SELECT * FROM " + tableName;
+        Cursor data = db.rawQuery(query, null);
+        return data;
+    }
+    public List<String[]> getDataComplete()
+    {
+        SQLiteDatabase db=this.getWritableDatabase();
+        Cursor cursor=this.getData(db);
+        List<String[]> data = new ArrayList<String[]>();
+        for(cursor.moveToLast();;)
+        {
+            data.add(new String[]{cursor.getString(0), cursor.getString(1),cursor.getString(2),cursor.getString(3   )});
+//            Log.d("hey1",cursor.getString(0)+" "+cursor.getString(1));
+            if(!cursor.moveToPrevious())
+                break;
 
+        }
+//        db.execSQL("DROP TABLE IF EXISTS " + db);
+        return data;
+    }
+
+    public void afterSync()
+    {
+        SQLiteDatabase db=this.getWritableDatabase();
+        db.execSQL("delete from "+ tableName);
+    }
 }
