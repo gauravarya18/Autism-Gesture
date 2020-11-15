@@ -16,6 +16,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.opencsv.CSVWriter;
@@ -35,14 +37,21 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
     Sensor gyroscope;
     CacheManager cacheManager;
     EditText et;
+    Switch st;
+    TextView tv;
 
+    float[][] Training_Gyro = new float[3][];
+    float[][] Recognition_Gyro = new float[3][];
+    float[][] Training_Acc = new float[3][];
+    float[][] Recognition_Acc = new float[3][];
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         cacheManager = new CacheManager(getApplicationContext());
         et =  findViewById(R.id.filename);
-
+        st =  findViewById(R.id.switch1);
+        tv =  findViewById(R.id.results);
     }
 
 
@@ -56,6 +65,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
             obj.setY(sensorEvent.values[1]);
             obj.setZ(sensorEvent.values[2]);
             cacheManager.addEntry(obj);
+
             Log.d("hey", " OnSensorChanged : Degree X " + sensorEvent.values[0] + " OnSensorChanged : Degree Y " + sensorEvent.values[1] + " OnSensorChanged : Degree Z " + sensorEvent.values[2]);
         }
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -160,5 +170,37 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                         .show();
             }
         }
+    }
+
+    public void testing(View view) {
+
+        if(!st.isChecked())
+        {
+            Training_Gyro = cacheManager.getTestingData("1");
+            Training_Acc = cacheManager.getTestingData("2");
+            cacheManager.afterSync();
+            Toast.makeText(MainActivity.this,
+                    "Data Trained",
+                    Toast.LENGTH_SHORT)
+                    .show();
+        }
+        else
+        {
+            Recognition_Gyro = cacheManager.getTestingData("1");
+            Recognition_Acc = cacheManager.getTestingData("2");
+            cacheManager.afterSync();
+            final DTW xx= new DTW();
+            Double[] DTW_score_gyro = new Double[3];
+            Double[] DTW_score_acc = new Double[3];
+            for(int i=0;i<3;i++)
+            {
+
+                DTW_score_gyro[i]=xx.compute(Recognition_Gyro[i],Training_Gyro[i]).getDistance();
+                DTW_score_acc[i]=xx.compute(Recognition_Acc[i],Training_Acc[i]).getDistance();
+            }
+            String display = "DTW_Scores_Gyro :: " + String.format("%.4f ",DTW_score_gyro[0]) + String.format("%.4f ",DTW_score_gyro[1]) + String.format("%.4f ",DTW_score_gyro[2]) + "\n" + "DTW_Scores_Acc :: " + String.format("%.4f ",DTW_score_acc[0]) + String.format("%.4f ",DTW_score_acc[1]) + String.format("%.4f ",DTW_score_acc[2]);
+            tv.setText(display);
+        }
+
     }
 }

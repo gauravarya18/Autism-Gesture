@@ -77,6 +77,29 @@ public class CacheManager extends SQLiteOpenHelper {
         return data;
     }
 
+    public float[][] getTestingData(String s)
+    {
+        SQLiteDatabase db=this.getWritableDatabase();
+        Cursor cursor=this.getData(db);
+        int len = cursor.getCount()/2;
+        float[][] Data = new float[3][len];
+        int i=0;
+        for(cursor.moveToLast();;)
+        {
+            if(i==len)
+                break;
+
+            if(cursor.getString(0).matches(s)) {
+                Data[0][i] = Float.parseFloat(cursor.getString(1));
+                Data[1][i] = Float.parseFloat(cursor.getString(2));
+                Data[2][i] = Float.parseFloat(cursor.getString(3));
+            }
+            if(!cursor.moveToPrevious())
+                break;
+            i=i+1;
+        }
+        return Data;
+    }
     public void afterSync()
     {
         SQLiteDatabase db=this.getWritableDatabase();
