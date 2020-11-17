@@ -10,17 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CacheManager extends SQLiteOpenHelper {
-
+    private static final String DATABASE_NAME = "Records";
     private static final String tableName = "Cache";
     private static final String TypeCol = "Col0";
     private static final String XCol= "Col1";
     private static final String YCol = "Col2";
     private static final String ZCol = "Col3";
 
+    private static final String tableNameCSV = "CSVFile";
 
 
     public CacheManager(Context context) {
-        super(context, tableName, null, 1);
+        super(context, DATABASE_NAME, null, 1);
+
     }
 
     @Override
@@ -33,6 +35,14 @@ public class CacheManager extends SQLiteOpenHelper {
                 YCol +" FLOAT,"  +
                 ZCol +" FLOAT)";
         sqLiteDatabase.execSQL(createTable);
+        String createTableCSV = "CREATE TABLE " + tableNameCSV +
+//                " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                " (" +
+                TypeCol +" TEXT,"  +
+                XCol +" FlOAT,"  +
+                YCol +" FLOAT,"  +
+                ZCol +" FLOAT)";
+        sqLiteDatabase.execSQL(createTableCSV);
     }
 
     @Override
@@ -42,7 +52,7 @@ public class CacheManager extends SQLiteOpenHelper {
     }
 
 
-    public long addEntry(Object mCachedObject) {
+    public long addEntry(Object mCachedObject,int index) {
 
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -50,20 +60,35 @@ public class CacheManager extends SQLiteOpenHelper {
         contentValues.put(this.XCol,mCachedObject.getX());
         contentValues.put(this.YCol,mCachedObject.getY());
         contentValues.put(this.ZCol,mCachedObject.getZ());
-
-        long result = db.insert(this.tableName, null, contentValues);
-        return result;
+        if(index==0) {
+            long result = db.insert(this.tableName, null, contentValues);
+            return result;
+        }
+        else
+        {
+            long result = db.insert(this.tableNameCSV, null, contentValues);
+            return result;
+        }
     }
-    private Cursor getData(SQLiteDatabase db){
+    private Cursor getData(SQLiteDatabase db,int index){
 
-        String query = "SELECT * FROM " + tableName;
+        String table;
+        if(index==0)
+        {
+            table=tableName;
+        }
+        else
+        {
+            table=tableNameCSV;
+        }
+        String query = "SELECT * FROM " + table;
         Cursor data = db.rawQuery(query, null);
         return data;
     }
     public List<String[]> getDataComplete()
     {
         SQLiteDatabase db=this.getWritableDatabase();
-        Cursor cursor=this.getData(db);
+        Cursor cursor=this.getData(db,0);
         List<String[]> data = new ArrayList<String[]>();
         for(cursor.moveToLast();;)
         {
@@ -77,10 +102,10 @@ public class CacheManager extends SQLiteOpenHelper {
         return data;
     }
 
-    public float[][] getTestingData(String s)
+    public float[][] getTestingData(String s,int index)
     {
         SQLiteDatabase db=this.getWritableDatabase();
-        Cursor cursor=this.getData(db);
+        Cursor cursor=this.getData(db,index);
         int len = cursor.getCount()/2;
         float[][] Data = new float[3][len];
         int i=0;
@@ -100,9 +125,18 @@ public class CacheManager extends SQLiteOpenHelper {
         }
         return Data;
     }
-    public void afterSync()
+    public void afterSync(int index)
     {
+        String table;
+        if(index==0)
+        {
+            table=tableName;
+        }
+        else
+        {
+            table=tableNameCSV;
+        }
         SQLiteDatabase db=this.getWritableDatabase();
-        db.execSQL("delete from "+ tableName);
+        db.execSQL("delete from "+ table);
     }
 }
