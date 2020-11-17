@@ -176,4 +176,12 @@ public class CacheManager extends SQLiteOpenHelper {
         SQLiteDatabase db=this.getWritableDatabase();
         db.execSQL("delete from "+ table);
     }
+
+    public void deleteAll()
+    {
+        SQLiteDatabase db=this.getWritableDatabase();
+        db.execSQL("delete from "+ tableName);
+        db.execSQL("delete from "+ tableNameGesture);
+        db.execSQL("delete from "+ tableNameCSV);
+    }
 }

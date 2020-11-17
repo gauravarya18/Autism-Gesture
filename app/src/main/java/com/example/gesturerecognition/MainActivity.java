@@ -18,7 +18,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -221,7 +220,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 //        if(!st.isChecked())
 //        {
             if(newGestureAdded) {
-                YourAsyncTask readData = new YourAsyncTask();
+                FetchingDataAsyncTask readData = new FetchingDataAsyncTask();
                 readData.execute();
             }
             else
@@ -293,10 +292,15 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         double d=(scores[0]+scores[1]+scores[2])/3;
         return (float)d;
     }
-    private class YourAsyncTask extends AsyncTask<Void, Void, Void> {
+
+    public void DeleteAllTables(View view) {
+        cacheManager.deleteAll();
+    }
+
+    private class FetchingDataAsyncTask extends AsyncTask<Void, Void, Void> {
         private ProgressDialog dialog;
 
-        public YourAsyncTask() {
+        public FetchingDataAsyncTask() {
 
         }
 
