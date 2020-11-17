@@ -57,37 +57,43 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.927" />
 
-    <Switch
-        android:id="@+id/switch1"
-        android:layout_width="191dp"
-        android:layout_height="59dp"
-        android:text="On for Recognition"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.507"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button"
-        app:layout_constraintVertical_bias="0.089" />
-
     <Button
         android:id="@+id/test"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Test Data"
         android:onClick="testing"
+        android:text="Test Data"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.514"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switch1" />
+        app:layout_constraintTop_toBottomOf="@+id/button"
+        app:layout_constraintVertical_bias="0.722" />
 
     <TextView
-        android:id="@+id/results"
-        android:layout_width="395dp"
-        android:layout_height="125dp"
-        android:text="Results"
-        android:textSize="14sp"
+        android:id="@+id/results_gyro"
+        android:layout_width="182dp"
+        android:layout_height="154dp"
+        android:text="Gyro"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/filename"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.457" />
+
+    <TextView
+        android:id="@+id/results_acc"
+        android:layout_width="182dp"
+        android:layout_height="154dp"
+        android:layout_marginEnd="17dp"
+        android:text="Acc"
+        android:textAlignment="center"
+        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/filename"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/results_gyro"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.454" />
 </androidx.constraintlayout.widget.ConstraintLayout>

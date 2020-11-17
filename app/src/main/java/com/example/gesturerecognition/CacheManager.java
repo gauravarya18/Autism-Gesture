@@ -19,6 +19,8 @@ public class CacheManager extends SQLiteOpenHelper {
 
     private static final String tableNameCSV = "CSVFile";
 
+    private static final String tableNameGesture = "Gestures";
+    private static final String Shape = "Col0";
 
     public CacheManager(Context context) {
         super(context, DATABASE_NAME, null, 1);
@@ -35,6 +37,7 @@ public class CacheManager extends SQLiteOpenHelper {
                 YCol +" FLOAT,"  +
                 ZCol +" FLOAT)";
         sqLiteDatabase.execSQL(createTable);
+
         String createTableCSV = "CREATE TABLE " + tableNameCSV +
 //                " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 " (" +
@@ -43,6 +46,11 @@ public class CacheManager extends SQLiteOpenHelper {
                 YCol +" FLOAT,"  +
                 ZCol +" FLOAT)";
         sqLiteDatabase.execSQL(createTableCSV);
+
+        String createTableGesture = "CREATE TABLE " + tableNameGesture +
+                " (" +
+                Shape +" TEXT)";
+        sqLiteDatabase.execSQL(createTableGesture);
     }
 
     @Override
@@ -51,6 +59,30 @@ public class CacheManager extends SQLiteOpenHelper {
         onCreate(sqLiteDatabase);
     }
 
+    public long addGesture(String gestureName)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(this.Shape,gestureName);
+        long result = db.insert(this.tableNameGesture, null, contentValues);
+        return result;
+    }
+
+    public List<String> getAllGestures()
+    {
+        SQLiteDatabase db=this.getWritableDatabase();
+        Cursor cursor=this.getData(db,2);
+        List<String> data = new ArrayList<String>();
+        for(cursor.moveToLast();;)
+        {
+            data.add(cursor.getString(0));
+            if(!cursor.moveToPrevious())
+                break;
+
+        }
+
+        return data;
+    }
 
     public long addEntry(Object mCachedObject,int index) {
 
@@ -70,6 +102,7 @@ public class CacheManager extends SQLiteOpenHelper {
             return result;
         }
     }
+
     private Cursor getData(SQLiteDatabase db,int index){
 
         String table;
@@ -77,9 +110,13 @@ public class CacheManager extends SQLiteOpenHelper {
         {
             table=tableName;
         }
-        else
+        else if(index ==1)
         {
             table=tableNameCSV;
+        }
+        else
+        {
+            table=tableNameGesture;
         }
         String query = "SELECT * FROM " + table;
         Cursor data = db.rawQuery(query, null);

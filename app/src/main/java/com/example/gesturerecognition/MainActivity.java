@@ -41,12 +41,13 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
     Sensor gyroscope;
     CacheManager cacheManager;
     EditText et;
-    Switch st;
-    TextView tv;
+//    Switch st;
+    TextView tv_acc,tv_gyro;
 
-    float[][][] Training_Gyro = new float[2][3][];
+    Boolean newGestureAdded;
+    float[][][] Training_Gyro;
     float[][] Recognition_Gyro = new float[3][];
-    float[][][] Training_Acc = new float[2][3][];
+    float[][][] Training_Acc;
     float[][] Recognition_Acc = new float[3][];
 
     float[][] Shapes_score = new float[2][2];
@@ -57,8 +58,11 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         setContentView(R.layout.activity_main);
         cacheManager = new CacheManager(getApplicationContext());
         et =  findViewById(R.id.filename);
-        st =  findViewById(R.id.switch1);
-        tv =  findViewById(R.id.results);
+//        st =  findViewById(R.id.switch1);
+        tv_acc =  findViewById(R.id.results_acc);
+        tv_gyro = findViewById(R.id.results_gyro);
+
+        newGestureAdded=true;
     }
 
 
@@ -140,6 +144,10 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        cacheManager.addGesture(et.getText().toString());
+        et.setText("");
+        newGestureAdded=true;
     }
 
     public void CSVReader(String name)
@@ -212,8 +220,14 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
 //        if(!st.isChecked())
 //        {
-            YourAsyncTask readData = new YourAsyncTask();
-            readData.execute();
+            if(newGestureAdded) {
+                YourAsyncTask readData = new YourAsyncTask();
+                readData.execute();
+            }
+            else
+            {
+                recognition();
+            }
 //        }
 //        else
 //        {
@@ -229,7 +243,17 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         final DTW xx= new DTW();
         Double[] DTW_score_gyro = new Double[3];
         Double[] DTW_score_acc = new Double[3];
-        for(int  j=0;j<2;j++) {
+
+        List<String> Shapes = cacheManager.getAllGestures();
+        Shapes_score = new float[Shapes.size()][2];
+        String results_gyro="";
+        String results_acc="";
+
+        float minGyro = 10000;
+        int indexForMinGyro = 0;
+        float minAcc = 10000;
+        int indexForMinAcc = 0;
+        for(int  j=0;j<Shapes.size();j++) {
             for (int i = 0; i < 3; i++) {
 
                 DTW_score_gyro[i] = xx.compute(Recognition_Gyro[i], Training_Gyro[j][i]).getDistance();
@@ -237,12 +261,32 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
             }
             Shapes_score[j][0]=Average(DTW_score_gyro);
             Shapes_score[j][1]=Average(DTW_score_acc);
+
+            results_gyro = results_gyro + Shapes.get(j) + " "+ String.format("%.4f ",Shapes_score[j][0]) + "\n";
+            results_acc = results_acc + Shapes.get(j) +" "+  String.format("%.4f ",Shapes_score[j][1]) + "\n";
+
+            if(Shapes_score[j][0]<minGyro)
+            {
+                minGyro = Shapes_score[j][0];
+                indexForMinGyro = j;
+            }
+
+            if(Shapes_score[j][1]<minAcc)
+            {
+                minAcc = Shapes_score[j][1];
+                indexForMinAcc = j;
+            }
+
         }
+        results_gyro = results_gyro + "Min :: " + Shapes.get(indexForMinGyro);
+        results_acc = results_acc + "Min :: " + Shapes.get(indexForMinAcc);
 
 
 //            String display = "DTW_Scores_Gyro :: " + String.format("%.4f ",DTW_score_gyro[0]) + String.format("%.4f ",DTW_score_gyro[1]) + String.format("%.4f ",DTW_score_gyro[2]) + "\n" + "DTW_Scores_Acc :: " + String.format("%.4f ",DTW_score_acc[0]) + String.format("%.4f ",DTW_score_acc[1]) + String.format("%.4f ",DTW_score_acc[2]);
-        String display = "DTW-Gyro: Circle :" + String.format("%.4f ",Shapes_score[0][0]) + "  Line :" + String.format("%.4f ",Shapes_score[1][0]) +"\n"+"DTW-Acc: Circle :" + String.format("%.4f ",Shapes_score[0][1]) + "  Line :" + String.format("%.4f ",Shapes_score[1][1]) ;
-        tv.setText(display);
+//        String display = "DTW-Gyro: Circle :" + String.format("%.4f ",Shapes_score[0][0]) + "  Line :" + String.format("%.4f ",Shapes_score[1][0]) +"\n"+"DTW-Acc: Circle :" + String.format("%.4f ",Shapes_score[0][1]) + "  Line :" + String.format("%.4f ",Shapes_score[1][1]) ;
+//        tv.setText(display);
+        tv_gyro.setText(results_gyro);
+        tv_acc.setText(results_acc);
     }
     Float Average(Double scores[])
     {
@@ -265,15 +309,18 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         @Override
         protected Void doInBackground(Void... args) {
             // do background work here
-            CSVReader("Circle");
-            Training_Gyro[0] = cacheManager.getTestingData("1",1);
-            Training_Acc[0] = cacheManager.getTestingData("2",1);
-            cacheManager.afterSync(1);
 
-            CSVReader("Line");
-            Training_Gyro[1] = cacheManager.getTestingData("1",1);
-            Training_Acc[1] = cacheManager.getTestingData("2",1);
-            cacheManager.afterSync(1);
+            List<String> Shapes = cacheManager.getAllGestures();
+            Training_Gyro = new float[Shapes.size()][3][];
+            Training_Acc = new float[Shapes.size()][3][];
+            for(int i=0;i<Shapes.size();i++) {
+
+                CSVReader(Shapes.get(i));
+                Training_Gyro[i] = cacheManager.getTestingData("1", 1);
+                Training_Acc[i] = cacheManager.getTestingData("2", 1);
+                cacheManager.afterSync(1);
+            }
+
             return null;
         }
         @Override
@@ -286,6 +333,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                     "Data Trained",
                     Toast.LENGTH_SHORT)
                     .show();
+            newGestureAdded=false;
             recognition();
         }
     }
