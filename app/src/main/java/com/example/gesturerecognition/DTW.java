@@ -21,10 +21,10 @@ public final class DTW {
     /** Default constructor for a class which implements dynamic time warping. */
     public DTW() { }
 
-    public DTW.Result compute(final float[] pSample, final float[] pTemplate) {
+    public DTW.Result compute(final float[][] pSample, final float[][] pTemplate) {
         // Declare Iteration Constants.
-        final int lN = pSample.length;
-        final int lM = pTemplate.length;
+        final int lN = pSample[0].length;
+        final int lM = pTemplate[0].length;
         // Ensure the samples are valid.
         if(lN == 0 || lM == 0) {
             // Assert a bad result.
@@ -45,11 +45,12 @@ public final class DTW {
         // Iterate the Sample.
         for(i = 0; i < lN; i++) {
             // Fetch the Sample.
-            final float lSample = pSample[i];
+//            final float lSample = pSample[i];
             // Iterate the Template.
             for(j = 0; j < lM; j++) {
                 // Calculate the Distance between the Sample and the Template for this Index.
-                lL[i][j] = this.getDistanceBetween(lSample, pTemplate[j]);
+                // x1 y1 z1 --- x2 y2 z2
+                lL[i][j] = this.getDistanceBetween(pSample[0][i],pSample[1][i],pSample[2][i],pTemplate[0][j],pTemplate[1][j],pTemplate[2][j]);
             }
         }
 
@@ -129,9 +130,11 @@ public final class DTW {
     }
 
     /** Computes a distance between two points. */
-    protected double getDistanceBetween(double p1, double p2) {
+    protected double getDistanceBetween(double x1, double y1, double z1, double x2, double y2, double z2) {
         // Calculate the square error.
-        return (p1 - p2) * (p1 - p2);
+//        return (p1 - p2) * (p1 - p2);
+        double result = Math.pow((x1-x2),2) + Math.pow((y1-y2),2) + Math.pow((z1-z2),2);
+        return Math.sqrt(result);
     }
 
     /** Finds the index of the minimum element from the given array. */

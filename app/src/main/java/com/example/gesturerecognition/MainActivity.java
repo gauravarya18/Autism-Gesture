@@ -240,8 +240,8 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         Recognition_Acc = cacheManager.getTestingData("2",0);
         cacheManager.afterSync(0);
         final DTW xx= new DTW();
-        Double[] DTW_score_gyro = new Double[3];
-        Double[] DTW_score_acc = new Double[3];
+        Double DTW_score_gyro ;
+        Double DTW_score_acc ;
 
         List<String> Shapes = cacheManager.getAllGestures();
         Shapes_score = new float[Shapes.size()][2];
@@ -253,13 +253,13 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         float minAcc = 10000;
         int indexForMinAcc = 0;
         for(int  j=0;j<Shapes.size();j++) {
-            for (int i = 0; i < 3; i++) {
+//            for (int i = 0; i < 3; i++) {
 
-                DTW_score_gyro[i] = xx.compute(Recognition_Gyro[i], Training_Gyro[j][i]).getDistance();
-                DTW_score_acc[i] = xx.compute(Recognition_Acc[i], Training_Acc[j][i]).getDistance();
-            }
-            Shapes_score[j][0]=Average(DTW_score_gyro);
-            Shapes_score[j][1]=Average(DTW_score_acc);
+                DTW_score_gyro = xx.compute(Recognition_Gyro, Training_Gyro[j]).getDistance();
+                DTW_score_acc = xx.compute(Recognition_Acc, Training_Acc[j]).getDistance();
+//            }
+            Shapes_score[j][0]= typeCasting(DTW_score_gyro);
+            Shapes_score[j][1]= typeCasting(DTW_score_acc);
 
             results_gyro = results_gyro + Shapes.get(j) + " "+ String.format("%.4f ",Shapes_score[j][0]) + "\n";
             results_acc = results_acc + Shapes.get(j) +" "+  String.format("%.4f ",Shapes_score[j][1]) + "\n";
@@ -287,9 +287,9 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         tv_gyro.setText(results_gyro);
         tv_acc.setText(results_acc);
     }
-    Float Average(Double scores[])
+    Float typeCasting(double d)
     {
-        double d=(scores[0]+scores[1]+scores[2])/3;
+//        double d=(scores[0]+scores[1]+scores[2])/3;
         return (float)d;
     }
 
