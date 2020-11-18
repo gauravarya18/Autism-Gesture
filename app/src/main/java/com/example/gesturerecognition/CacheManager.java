@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.gesture.Gesture;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -177,11 +178,17 @@ public class CacheManager extends SQLiteOpenHelper {
         db.execSQL("delete from "+ table);
     }
 
-    public void deleteAll()
+    public void deleteAll(String name)
     {
-        SQLiteDatabase db=this.getWritableDatabase();
-        db.execSQL("delete from "+ tableName);
-        db.execSQL("delete from "+ tableNameGesture);
-        db.execSQL("delete from "+ tableNameCSV);
+        SQLiteDatabase db = this.getWritableDatabase();
+        if(name.matches("")) {
+            db.execSQL("delete from " + tableName);
+            db.execSQL("delete from " + tableNameGesture);
+            db.execSQL("delete from " + tableNameCSV);
+        }
+        else
+        {
+            db.execSQL("delete from " + tableNameGesture + " where " + Shape + " = '" + name+"'");
+        }
     }
 }

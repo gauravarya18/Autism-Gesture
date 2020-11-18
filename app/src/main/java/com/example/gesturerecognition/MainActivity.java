@@ -294,7 +294,10 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
     }
 
     public void DeleteAllTables(View view) {
-        cacheManager.deleteAll();
+        cacheManager.deleteAll(et.getText().toString());
+        File csvFile =  new File(this.getFilesDir(), et.getText().toString()+".csv");
+        csvFile.delete();
+        et.setText("");
     }
 
     private class FetchingDataAsyncTask extends AsyncTask<Void, Void, Void> {
