@@ -24,12 +24,16 @@ import android.widget.Toast;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 
+import org.tensorflow.lite.Interpreter;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 
 public class MainActivity extends AppCompatActivity  implements SensorEventListener {
@@ -50,6 +54,16 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
     float[][] Recognition_Acc = new float[3][];
 
     float[][] Shapes_score = new float[2][2];
+    Interpreter interpreter;
+
+    private static final String MODEL_PATH = "model.tflite";
+    private static final boolean QUANT = false;
+    private static final String LABEL_PATH = "labels.txt";
+    private static final int INPUT_SIZE = 224;
+    private Classifier classifier;
+    private Executor executor = Executors.newSingleThreadExecutor();
+    int frameSize =10;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +76,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         tv_gyro = findViewById(R.id.results_gyro);
 
         newGestureAdded=true;
+        initTensorFlowAndLoadModel();
     }
 
 
@@ -123,30 +138,38 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
     }
 
     public void OnSyncAction(View view) {
-        checkPermission(
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                STORAGE_PERMISSION_CODE);
-//        String csv = (getExternalFilesDir().getAbsolutePath() + "/MyCsvFile.csv"); // Here csv file name is MyCsvFile.csv
-        File file = new File(this.getFilesDir(), et.getText()+".csv");
 
-        CSVWriter writer = null;
-        try {
-            writer = new CSVWriter(new FileWriter(file.getAbsolutePath()));
-
-            List<String[]> data = new ArrayList<String[]>();
-            data=cacheManager.getDataComplete();
-            writer.writeAll(data); // data is adding to csv
-
-            writer.close();
-            cacheManager.afterSync(0);
-
-        } catch (IOException e) {
-            e.printStackTrace();
+        String name=et.getText().toString();
+        if(name.matches(""))
+        {
+            Toast.makeText(this, "Enter a file name", Toast.LENGTH_SHORT).show();
         }
+        else {
+            checkPermission(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    STORAGE_PERMISSION_CODE);
+//        String csv = (getExternalFilesDir().getAbsolutePath() + "/MyCsvFile.csv"); // Here csv file name is MyCsvFile.csv
+            File file = new File(this.getFilesDir(), et.getText() + ".csv");
 
-        cacheManager.addGesture(et.getText().toString());
-        et.setText("");
-        newGestureAdded=true;
+            CSVWriter writer = null;
+            try {
+                writer = new CSVWriter(new FileWriter(file.getAbsolutePath()));
+
+                List<String[]> data = new ArrayList<String[]>();
+                data = cacheManager.getDataComplete();
+                writer.writeAll(data); // data is adding to csv
+
+                writer.close();
+                cacheManager.afterSync(0);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            cacheManager.addGesture(name);
+            et.setText("");
+            newGestureAdded = true;
+        }
     }
 
     public void CSVReader(String name)
@@ -300,6 +323,32 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         et.setText("");
     }
 
+    public void Model(View view) {
+
+
+        Recognition_Acc = cacheManager.getTestingData("2",0);
+        cacheManager.afterSync(0);
+        final List<Classifier.Recognition> results = classifier.recognizeGesture(transpose(Recognition_Acc));
+        tv_acc.setText(results.toString());
+
+    }
+
+    private float[][][][] transpose(float[][] data)
+    {
+        Log.d("hey+",String.valueOf(data.length)+" "+ String.valueOf(data[0].length));
+        float[][][][] Data = new float[data[0].length/frameSize][frameSize][data.length][1];
+        for(int i=0;i<data[0].length/frameSize;i++)
+        {
+            for(int k=0;k<frameSize;k++) {
+                for (int j = 0; j < data.length; j++) {
+                    Data[i][k][j][0]=data[j][i*frameSize+k];
+                }
+            }
+        }
+        Log.d("hey++",String.valueOf(Data.length)+" "+ String.valueOf(Data[0].length)+" "+ String.valueOf(Data[0][0].length)+" "+ String.valueOf(Data[0][0][0].length));
+        return Data;
+    }
+
     private class FetchingDataAsyncTask extends AsyncTask<Void, Void, Void> {
         private ProgressDialog dialog;
 
@@ -344,5 +393,26 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
             recognition();
         }
     }
+
+    private void initTensorFlowAndLoadModel() {
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    classifier = TensorFlowGestureClassifier.create(
+                            getAssets(),
+                            MODEL_PATH,
+                            LABEL_PATH,
+                            INPUT_SIZE,
+                            QUANT);
+                } catch (final Exception e) {
+                    throw new RuntimeException("Error initializing TensorFlow!", e);
+                }
+            }
+        });
+    }
+
+
+
 }
 
