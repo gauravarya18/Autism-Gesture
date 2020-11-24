@@ -1,3 +1,6 @@
+BottomUp
 Bye_1
-Circlr
+Circle
+FrontUp
 Line_1
+StaticFlip

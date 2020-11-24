@@ -11,7 +11,6 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -53,7 +52,6 @@ public class TensorFlowGestureClassifier implements Classifier {
     @Override
     public List<Recognition> recognizeGesture(float[][][][] data) {
 
-//        ByteBuffer byteBuffer = convertBitmapToByteBuffer(bitmap);
         int[] ans = new int[6];
         if(quant){
             byte[][] result = new byte[1][labelList.size()];
@@ -65,7 +63,7 @@ public class TensorFlowGestureClassifier implements Classifier {
             interpreter.run(data, result);
             for(int i=0;i<result.length;i++)
             {
-                ans[getMinimumIndex(result[i])]++;
+                ans[getMaximumIndex(result[i])]++;
             }
 
             for(int i=0;i<6;i++)
@@ -83,14 +81,14 @@ public class TensorFlowGestureClassifier implements Classifier {
 
     }
 
-    private int getMinimumIndex(float[] d)
+    private int getMaximumIndex(float[] d)
     {
-        float score=100;
+        float score=-1;
         int ans=-1;
         for(int i=0;i<d.length;i++)
         {
             Log.d("hey_score",String.valueOf(d[i]));
-            if(score>d[i])
+            if(score<d[i])
             {
                 score=d[i];
                 ans=i;
