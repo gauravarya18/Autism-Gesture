@@ -56,11 +56,13 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
     float[][] Shapes_score = new float[2][2];
     Interpreter interpreter;
 
-    private static final String MODEL_PATH = "model.tflite";
+    private static final String MODEL_PATH_GYRO = "model_Gyro.tflite";
+    private static final String MODEL_PATH_ACC = "model.tflite";
     private static final boolean QUANT = false;
     private static final String LABEL_PATH = "labels.txt";
     private static final int INPUT_SIZE = 224;
-    private Classifier classifier;
+    private Classifier classifierAcc;
+    private Classifier classifierGyro;
     private Executor executor = Executors.newSingleThreadExecutor();
     int frameSize =10;
 
@@ -76,7 +78,8 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         tv_gyro = findViewById(R.id.results_gyro);
 
         newGestureAdded=true;
-        initTensorFlowAndLoadModel();
+        initTensorFlowAndLoadModelAcc();
+        initTensorFlowAndLoadModelGyro();
     }
 
 
@@ -325,12 +328,18 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
     public void Model(View view) {
 
-
+        Recognition_Gyro = cacheManager.getTestingData("1",0);
         Recognition_Acc = cacheManager.getTestingData("2",0);
         cacheManager.afterSync(0);
-        final List<Classifier.Recognition> results = classifier.recognizeGesture(transpose(Recognition_Acc));
-        tv_acc.setText(results.toString());
 
+        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose(Recognition_Acc));
+        tv_acc.setText(results.toString());
+//        classifierAcc.close();
+
+
+        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose(Recognition_Gyro));
+        tv_gyro.setText(resultsGyro.toString());
+//        classifierGyro.close();
     }
 
     private float[][][][] transpose(float[][] data)
@@ -394,14 +403,35 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         }
     }
 
-    private void initTensorFlowAndLoadModel() {
+    private void initTensorFlowAndLoadModelAcc() {
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    classifier = TensorFlowGestureClassifier.create(
+                    classifierAcc = TensorFlowGestureClassifier.create(
                             getAssets(),
-                            MODEL_PATH,
+                            MODEL_PATH_ACC,
+                            LABEL_PATH,
+                            INPUT_SIZE,
+                            QUANT);
+                } catch (final Exception e) {
+                    throw new RuntimeException("Error initializing TensorFlow!", e);
+                }
+            }
+        });
+
+
+    }
+
+    private void initTensorFlowAndLoadModelGyro() {
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    classifierGyro = TensorFlowGestureClassifier.create(
+                            getAssets(),
+                            MODEL_PATH_GYRO,
                             LABEL_PATH,
                             INPUT_SIZE,
                             QUANT);
@@ -411,8 +441,6 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
             }
         });
     }
-
-
 
 }
 

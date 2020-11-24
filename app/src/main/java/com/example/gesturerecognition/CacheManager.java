@@ -144,7 +144,17 @@ public class CacheManager extends SQLiteOpenHelper {
     {
         SQLiteDatabase db=this.getWritableDatabase();
         Cursor cursor=this.getData(db,index);
-        int len = cursor.getCount()/2;
+        int len=0;
+        for(cursor.moveToLast();;)
+        {
+            if(cursor.getString(0).matches(s)) {
+                len++;
+            }
+            if(!cursor.moveToPrevious())
+                break;
+        }
+
+//        int len = cursor.getCount()/2;
         float[][] Data = new float[3][len];
         int i=0;
         for(cursor.moveToLast();;)
