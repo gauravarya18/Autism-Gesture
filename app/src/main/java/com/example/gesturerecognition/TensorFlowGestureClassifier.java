@@ -26,9 +26,8 @@ public class TensorFlowGestureClassifier implements Classifier {
 
 
     private Interpreter interpreter;
-    private int inputSize;
     private List<String> labelList;
-    private boolean quant;
+
 
     private TensorFlowGestureClassifier() {
 
@@ -36,15 +35,12 @@ public class TensorFlowGestureClassifier implements Classifier {
 
     static Classifier create(AssetManager assetManager,
                              String modelPath,
-                             String labelPath,
-                             int inputSize,
-                             boolean quant) throws IOException {
+                             String labelPath) throws IOException {
 
         TensorFlowGestureClassifier classifier = new TensorFlowGestureClassifier();
         classifier.interpreter = new Interpreter(classifier.loadModelFile(assetManager, modelPath), new Interpreter.Options());
         classifier.labelList = classifier.loadLabelList(assetManager, labelPath);
-        classifier.inputSize = inputSize;
-        classifier.quant = quant;
+
 
         return classifier;
     }
@@ -52,12 +48,8 @@ public class TensorFlowGestureClassifier implements Classifier {
     @Override
     public List<Recognition> recognizeGesture(float[][][][] data) {
 
-        int[] ans = new int[6];
-        if(quant){
-            byte[][] result = new byte[1][labelList.size()];
-            interpreter.run(data, result);
-            return getSortedResultByte(result);
-        } else {
+        float[] ans = new float[6];
+
             float [][] Ans = new float[1][labelList.size()];
             float [][] result = new float[data.length][6];
             interpreter.run(data, result);
@@ -71,13 +63,13 @@ public class TensorFlowGestureClassifier implements Classifier {
 
             for(int i=0;i<labelList.size();i++)
             {
-                double d = ans[i]*1.0/result.length;
+                double d = ans[i]/result.length;
                 float f = (float)d;
                 Log.d("hey--",labelList.get(i)+" "+String.valueOf(f));
                 Ans[0][i]=f;
             }
             return getSortedResultFloat(Ans);
-        }
+
 
     }
 
@@ -87,14 +79,14 @@ public class TensorFlowGestureClassifier implements Classifier {
         int ans=-1;
         for(int i=0;i<d.length;i++)
         {
-            Log.d("hey_score",String.valueOf(d[i]));
+//            Log.d("hey_score",String.valueOf(d[i]));
             if(score<d[i])
             {
                 score=d[i];
                 ans=i;
             }
         }
-        Log.d("hey_score","break");
+//        Log.d("hey_score","break");
         return ans;
     }
     @Override
@@ -142,7 +134,7 @@ public class TensorFlowGestureClassifier implements Classifier {
             if (confidence > THRESHOLD) {
                 pq.add(new Recognition("" + i,
                         labelList.size() > i ? labelList.get(i) : "unknown",
-                        confidence, quant));
+                        confidence));
             }
         }
 
@@ -173,7 +165,7 @@ public class TensorFlowGestureClassifier implements Classifier {
             if (confidence > THRESHOLD) {
                 pq.add(new Recognition("" + i,
                         labelList.size() > i ? labelList.get(i) : "unknown",
-                        confidence, quant));
+                        confidence));
             }
         }
 

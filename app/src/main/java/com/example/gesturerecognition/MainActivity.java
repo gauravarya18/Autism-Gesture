@@ -52,19 +52,18 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
     float[][] Recognition_Gyro = new float[3][];
     float[][][] Training_Acc;
     float[][] Recognition_Acc = new float[3][];
-
     float[][] Shapes_score = new float[2][2];
-    Interpreter interpreter;
+
 
     private static final String MODEL_PATH_GYRO = "model_Gyro.tflite";
     private static final String MODEL_PATH_ACC = "model.tflite";
-    private static final boolean QUANT = false;
     private static final String LABEL_PATH = "labels.txt";
-    private static final int INPUT_SIZE = 224;
+
     private Classifier classifierAcc;
     private Classifier classifierGyro;
     private Executor executor = Executors.newSingleThreadExecutor();
-    int frameSize =10;
+    int frameSize =80;
+    int hopSize =40;
 
 
     @Override
@@ -332,29 +331,52 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         Recognition_Acc = cacheManager.getTestingData("2",0);
         cacheManager.afterSync(0);
 
-        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose(Recognition_Acc));
+        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose((Recognition_Acc)));
         tv_acc.setText(results.toString());
 //        classifierAcc.close();
 
 
-        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose(Recognition_Gyro));
-        tv_gyro.setText(resultsGyro.toString());
+//        final List<Classifier.Recognition> resultsGyro = classifierAcc.recognizeGesture(transpose(Recognition_Acc));
+//        tv_gyro.setText(resultsGyro.toString());
 //        classifierGyro.close();
+
     }
+
 
     private float[][][][] transpose(float[][] data)
     {
         Log.d("hey+",String.valueOf(data.length)+" "+ String.valueOf(data[0].length));
-        float[][][][] Data = new float[data[0].length/frameSize][frameSize][data.length][1];
-        for(int i=0;i<data[0].length/frameSize;i++)
+//        float[][][][] Data = new float[data[0].length/frameSize][frameSize][data.length][1];
+//        for(int i=0;i<data[0].length/frameSize;i++)
+//        {
+//            for(int k=0;k<frameSize;k++) {
+//                for (int j = 0; j < data.length; j++) {
+//                    Data[i][k][j][0]=data[j][i*frameSize+k];
+//                }
+//            }
+//        }
+//        Log.d("hey++",String.valueOf(Data.length)+" "+ String.valueOf(Data[0].length)+" "+ String.valueOf(Data[0][0].length)+" "+ String.valueOf(Data[0][0][0].length));
+
+        float[][][][] Data = new float[((data[0].length-frameSize)/(frameSize-hopSize))+1][frameSize][data.length][1];
+        int i=0;
+        for(int j=0;j<data[0].length-frameSize;j+=hopSize)
         {
-            for(int k=0;k<frameSize;k++) {
-                for (int j = 0; j < data.length; j++) {
-                    Data[i][k][j][0]=data[j][i*frameSize+k];
+            for(int k=0;k<frameSize;k++)
+                {
+                    for(int l=0;l<data.length;l++)
+                    {
+                        Data[i][k][l][0]=data[l][j+k];
+
+                    }
+//                    Log.d("hey++",String.valueOf(i)+" "+ String.valueOf(k)+" "+" "+ String.valueOf(0)+" == "+ " "+ String.valueOf(j+k));
+
                 }
-            }
+            i++;
         }
-        Log.d("hey++",String.valueOf(Data.length)+" "+ String.valueOf(Data[0].length)+" "+ String.valueOf(Data[0][0].length)+" "+ String.valueOf(Data[0][0][0].length));
+
+
+        Log.d("hey++",String.valueOf(i)+" "+ String.valueOf(Data.length)+" "+ String.valueOf(Data[0][0].length)+" "+ String.valueOf(Data[0][0][0].length));
+
         return Data;
     }
 
@@ -411,9 +433,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                     classifierAcc = TensorFlowGestureClassifier.create(
                             getAssets(),
                             MODEL_PATH_ACC,
-                            LABEL_PATH,
-                            INPUT_SIZE,
-                            QUANT);
+                            LABEL_PATH);
                 } catch (final Exception e) {
                     throw new RuntimeException("Error initializing TensorFlow!", e);
                 }
@@ -432,9 +452,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                     classifierGyro = TensorFlowGestureClassifier.create(
                             getAssets(),
                             MODEL_PATH_GYRO,
-                            LABEL_PATH,
-                            INPUT_SIZE,
-                            QUANT);
+                            LABEL_PATH);
                 } catch (final Exception e) {
                     throw new RuntimeException("Error initializing TensorFlow!", e);
                 }
@@ -442,5 +460,47 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         });
     }
 
+    private float[][] normalize(float[][] data)
+    {
+        float[][] norData = new float[data.length][data[0].length];
+        float meanX = 0;
+        float meanY = 0;
+        float meanZ = 0;
+
+        float VarX = 0;
+        float VarY = 0;
+        float VarZ = 0;
+
+        for(int j=0;j<data[0].length;j++)
+        {
+            meanX = meanX + data[0][j];
+            meanY = meanY + data[1][j];
+            meanZ = meanZ + data[2][j];
+        }
+        meanX = meanX/data[0].length;
+        meanY = meanY/data[0].length;
+        meanZ = meanZ/data[0].length;
+
+        double power =2;
+        for(int j=0;j<data[0].length;j++)
+        {
+            VarX = VarX + (float)Math.pow(data[0][j]-meanX,power);
+            VarY = VarY + (float)Math.pow(data[1][j]-meanY,power);
+            VarZ = VarZ + (float)Math.pow(data[2][j]-meanZ,power);
+        }
+
+        VarX = (float)Math.sqrt(VarX/data[0].length);
+        VarY = (float)Math.sqrt(VarY/data[0].length);
+        VarZ = (float)Math.sqrt(VarZ/data[0].length);
+
+        for(int j=0;j<data[0].length;j++)
+        {
+            norData[0][j] = (data[0][j] - meanX)/VarX;
+            norData[1][j] = (data[1][j] - meanY)/VarY;
+            norData[2][j] = (data[2][j] - meanZ)/VarZ;
+        }
+
+        return norData;
+    }
 }
 
