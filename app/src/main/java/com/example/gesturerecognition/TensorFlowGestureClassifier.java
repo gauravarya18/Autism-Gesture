@@ -48,17 +48,25 @@ public class TensorFlowGestureClassifier implements Classifier {
     @Override
     public List<Recognition> recognizeGesture(float[][][][] data) {
 
-        float[] ans = new float[6];
+
+        float[] ans = new float[labelList.size()];
 
             float [][] Ans = new float[1][labelList.size()];
-            float [][] result = new float[data.length][6];
+
+            if(data==null)
+                return getSortedResultFloat(Ans);
+
+        float [][] result = new float[data.length][labelList.size()];
             interpreter.run(data, result);
             for(int i=0;i<result.length;i++)
             {
-                ans[getMaximumIndex(result[i])]++;
+                for(int j=0;j<labelList.size();j++)
+                {
+                    ans[j]=ans[j]+result[i][j];
+                }
             }
 
-            for(int i=0;i<6;i++)
+            for(int i=0;i<labelList.size();i++)
             Log.d("hey++",String.valueOf(ans[i]));
 
             for(int i=0;i<labelList.size();i++)

@@ -1,6 +1,5 @@
-BottomUp
-Bye_1
-Circle
-FrontUp
-Line_1
-StaticFlip
+ByeBye
+Eight
+LineX
+LineY
+Spiral

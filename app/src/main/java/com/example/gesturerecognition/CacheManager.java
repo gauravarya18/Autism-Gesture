@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.gesture.Gesture;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,12 +76,24 @@ public class CacheManager extends SQLiteOpenHelper {
         SQLiteDatabase db=this.getWritableDatabase();
         Cursor cursor=this.getData(db,2);
         List<String> data = new ArrayList<String>();
-        for(cursor.moveToLast();;)
-        {
-            data.add(cursor.getString(0));
-            if(!cursor.moveToPrevious())
-                break;
 
+        if(cursor == null)
+            return data;
+
+//        for(cursor.moveToLast();;)
+//        {
+//            data.add(cursor.getString(0));
+//            if(!cursor.moveToPrevious())
+//                break;
+//
+//        }
+
+        try {
+            while (cursor.moveToNext()) {
+                data.add(cursor.getString(0));
+            }
+        } finally {
+            cursor.close();
         }
 
         return data;
@@ -145,16 +159,24 @@ public class CacheManager extends SQLiteOpenHelper {
         SQLiteDatabase db=this.getWritableDatabase();
         Cursor cursor=this.getData(db,index);
         int len=0;
-        for(cursor.moveToLast();;)
-        {
-            if(cursor.getString(0).matches(s)) {
-                len++;
+        try {
+            while (cursor.moveToNext()) {
+                if(cursor.getString(0).matches(s))
+                    len++;
             }
-            if(!cursor.moveToPrevious())
-                break;
-        }
+        } finally {
 
-//        int len = cursor.getCount()/2;
+        }
+//        for(cursor.moveToLast();;)
+//        {
+//            if(cursor.getString(0).matches(s)) {
+//                len++;
+//            }
+//            if(!cursor.moveToPrevious())
+//                break;
+//        }
+
+
         float[][] Data = new float[3][len];
         int i=0;
         for(cursor.moveToLast();;)

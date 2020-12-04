@@ -62,7 +62,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="testing"
-        android:text="Test Data"
+        android:text="Test  DTW + CNN"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.514"
@@ -76,7 +76,7 @@
         android:layout_height="154dp"
         android:text="Gyro"
         android:textAlignment="center"
-        android:textSize="16sp"
+        android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@+id/filename"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -89,7 +89,7 @@
         android:layout_marginEnd="17dp"
         android:text="Acc"
         android:textAlignment="center"
-        android:textSize="16sp"
+        android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@+id/filename"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -114,10 +114,19 @@
         android:id="@+id/button4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Tensorflow ans"
+        android:text="Test CNN"
         android:onClick="Model"
         app:layout_constraintBottom_toTopOf="@+id/test"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/button3" />
+
+    <Switch
+        android:id="@+id/switch1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Release"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/test" />
 </androidx.constraintlayout.widget.ConstraintLayout>
