@@ -6,6 +6,7 @@ import android.content.res.AssetManager;
 import android.util.Log;
 
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.nnapi.NnApiDelegate;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -22,7 +23,6 @@ public class TensorFlowGestureClassifier implements Classifier {
 
     private static final int MAX_RESULTS = 3;
     private static final float THRESHOLD = 0.1f;
-
 
 
     private Interpreter interpreter;
@@ -49,32 +49,39 @@ public class TensorFlowGestureClassifier implements Classifier {
     public List<Recognition> recognizeGesture(float[][][][] data) {
 
 
-        float[] ans = new float[labelList.size()];
 
-            float [][] Ans = new float[1][labelList.size()];
-
-            if(data==null)
-                return getSortedResultFloat(Ans);
-
-        float [][] result = new float[data.length][labelList.size()];
-            interpreter.run(data, result);
-            for(int i=0;i<result.length;i++)
-            {
-                for(int j=0;j<labelList.size();j++)
-                {
-                    ans[j]=ans[j]+result[i][j];
+            for (int i = 0; i < data.length; i++) {
+                for (int j = 0; j < data[i].length; j++) {
+                    Log.d("hey_value", String.valueOf(data[i][j][0][0]) + " " + String.valueOf(data[i][j][1][0]) + " " + String.valueOf(data[i][j][2][0]));
                 }
             }
 
-            for(int i=0;i<labelList.size();i++)
-            Log.d("hey++",String.valueOf(ans[i]));
+            float[] ans = new float[labelList.size()];
 
-            for(int i=0;i<labelList.size();i++)
-            {
-                double d = ans[i]/result.length;
-                float f = (float)d;
-                Log.d("hey--",labelList.get(i)+" "+String.valueOf(f));
-                Ans[0][i]=f;
+            float[][] Ans = new float[1][labelList.size()];
+
+            if (data == null)
+                return getSortedResultFloat(Ans);
+
+            float[][] result = new float[data.length][labelList.size()];
+
+            interpreter.run(data, result);
+            for (int i = 0; i < result.length; i++) {
+//                for(int j=0;j<labelList.size();j++)
+//                {
+//                    ans[j]=ans[j]+result[i][j];
+//                }
+                ans[getMaximumIndex(result[i])]++;
+            }
+
+            for (int i = 0; i < labelList.size(); i++)
+                Log.d("hey++", String.valueOf(ans[i]));
+
+            for (int i = 0; i < labelList.size(); i++) {
+                double d = ans[i] / result.length;
+                float f = (float) d;
+                Log.d("hey--", labelList.get(i) + " " + String.valueOf(f));
+                Ans[0][i] = f;
             }
             return getSortedResultFloat(Ans);
 

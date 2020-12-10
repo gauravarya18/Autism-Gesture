@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
 
     private static final String MODEL_PATH_GYRO = "model_Gyro.tflite";
-    private static final String MODEL_PATH_ACC = "model.tflite";
+    private static final String MODEL_PATH_ACC = "modelAcc.tflite";
     private static final String LABEL_PATH = "labels.txt";
 
     private Classifier classifierAcc;
@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
             obj.setType(2);
             obj.setX(sensorEvent.values[0]);
             obj.setY(sensorEvent.values[1]);
-            obj.setZ(sensorEvent.values[2]);
+            obj.setZ(sensorEvent.values[2]-10);
             long x = cacheManager.addEntry(obj,0);
             Log.d("hey1", Long.toString(x));
         }
@@ -313,6 +313,12 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         Recognition_Gyro = cacheManager.getTestingData("1",0);
         Recognition_Acc = cacheManager.getTestingData("2",0);
         cacheManager.afterSync(0);
+
+
+        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose((Recognition_Acc)));
+        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose((Recognition_Gyro)));
+
+
         final DTW xx= new DTW();
         Double DTW_score_gyro ;
         Double DTW_score_acc ;
@@ -371,8 +377,8 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 //        String display = "DTW-Gyro: Circle :" + String.format("%.4f ",Shapes_score[0][0]) + "  Line :" + String.format("%.4f ",Shapes_score[1][0]) +"\n"+"DTW-Acc: Circle :" + String.format("%.4f ",Shapes_score[0][1]) + "  Line :" + String.format("%.4f ",Shapes_score[1][1]) ;
 //        tv.setText(display);
 
-        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose((Recognition_Acc)));
-        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose(Recognition_Gyro));
+//        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose(normalize(Recognition_Acc)));
+//        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose(normalize(Recognition_Gyro)));
 
         tv_gyro.setText(results_gyro + "\n" + resultsGyro.toString());
         tv_acc.setText(results_acc + "\n" + results.toString());
@@ -395,23 +401,70 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
         Recognition_Gyro = cacheManager.getTestingData("1",0);
         Recognition_Acc = cacheManager.getTestingData("2",0);
-        cacheManager.afterSync(0);
+//        cacheManager.afterSync(0);
 
+
+//        float [][][][]  AccData = transpose(Recognition_Acc);
+//        for(int i=0;i<AccData.length;i++)
+//        {
+//            float[][][][] Data = new float[1][frameSize][3][1];
+//            Data[0]=AccData[i];
+//            final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(((Data)));
+//            Log.d("hey_resultsQuant",String.valueOf(i)+" "+results.toString());
+//        }
         final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose((Recognition_Acc)));
         tv_acc.setText(results.toString());
 //        classifierAcc.close();
 
 
-        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose(Recognition_Gyro));
+        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose((Recognition_Gyro)));
         tv_gyro.setText(resultsGyro.toString());
 //        classifierGyro.close();
+
+
+
+        OnSyncAction(view);
+
+
+//        float[][] data = new float[3][6];
+//        for(int i=0;i<3;i++)
+//        {
+//            for(int j=0;j<6;j++)
+//            {
+//                data[i][j]=j+1;
+//            }
+//        }
+//
+//        data = normalize(data);
+//
+//        for(int i=0;i<3;i++)
+//        {
+//            for(int j=0;j<6;j++)
+//            {
+//                Log.d("hey_nor",String.valueOf(data[i][j]));
+//            }
+//        }
 
     }
 
 
+    private float[][] reverse(float[][] data)
+    {
+        float[][] Data = new float[data.length][data[0].length];
+        for(int i=0;i<3;i++)
+        {
+            for(int j=data[0].length-1;j>=0;j--)
+            {
+                Data[i][j]=data[i][data[0].length-1-j];
+            }
+        }
+
+        return Data;
+    }
     private float[][][][] transpose(float[][] data)
     {
-        Log.d("hey+",String.valueOf(data.length)+" "+ String.valueOf(data[0].length));
+        data=reverse(data);
+//        Log.d("hey+",String.valueOf(data.length)+" "+ String.valueOf(data[0].length));
 //        float[][][][] Data = new float[data[0].length/frameSize][frameSize][data.length][1];
 //        for(int i=0;i<data[0].length/frameSize;i++)
 //        {
@@ -439,6 +492,8 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                         Data[i][k][l][0]=data[l][j+k];
 
                     }
+//                    Log.d("hey++",String.valueOf(i)+" "+ String.valueOf(k)+" "+" "+ String.valueOf(0)+" == "+ " "+ String.valueOf(j+k) + " " + String.valueOf(data[0][j+k]));
+
 //                    Log.d("hey++",String.valueOf(i)+" "+ String.valueOf(k)+" "+" "+ String.valueOf(0)+" == "+ " "+ String.valueOf(j+k));
 
                 }
@@ -493,21 +548,28 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                         {
                             minAccLength = Training_Acc[i][0].length;
                         }
-                        cacheManager.afterSync(1);
 
-                }
-
-                for (int i = 0; i < Shapes.size(); i++) {
-
-                        load(Shapes.get(i), true);
-                        Training_Gyro[i] = cacheManager.getTestingData("1", 1);
                         if(Training_Gyro[i][0].length<minGyroLength)
                         {
                             minGyroLength = Training_Gyro[i][0].length;
                         }
+
                         cacheManager.afterSync(1);
 
                 }
+
+//                  Specially for GyroFiles !!
+//                for (int i = 0; i < Shapes.size(); i++) {
+//
+//                        load(Shapes.get(i), true);
+//                        Training_Gyro[i] = cacheManager.getTestingData("1", 1);
+//                        if(Training_Gyro[i][0].length<minGyroLength)
+//                        {
+//                            minGyroLength = Training_Gyro[i][0].length;
+//                        }
+//                        cacheManager.afterSync(1);
+//
+//                }
 
                 Log.d("hey",String.valueOf(minAccLength)+" "+String.valueOf(minGyroLength));
                 float [][][] tempAcc =  new float[Shapes.size()][3][minAccLength];
@@ -548,7 +610,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
             else {
                 for (int i = 0; i < Shapes.size(); i++) {
 
-                        CSVReader(Shapes.get(i));
+                        CSVReader("Test"+Shapes.get(i));
                         Training_Gyro[i] = cacheManager.getTestingData("1", 1);
                         Training_Acc[i] = cacheManager.getTestingData("2", 1);
                         cacheManager.afterSync(1);
@@ -607,46 +669,68 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         });
     }
 
+    private float[][] removeStartingAndEnding(float[][] data)
+    {
+        float[][] Data = new float[data.length][data[0].length-50];
+        for(int i=0;i<Data.length;i++)
+        {
+            for(int j=0;j<Data.length;j++)
+            {
+                Data[j][i]=data[j][i+25];
+            }
+        }
+
+        return Data;
+    }
     private float[][] normalize(float[][] data)
     {
+
+//        data = removeStartingAndEnding(data);
+
         float[][] norData = new float[data.length][data[0].length];
-        float meanX = 0;
-        float meanY = 0;
-        float meanZ = 0;
-
-        float VarX = 0;
-        float VarY = 0;
-        float VarZ = 0;
-
+//        float meanX = 0;
+//        float meanY = 0;
+//        float meanZ = 0;
+//
+//        float VarX = 0;
+//        float VarY = 0;
+//        float VarZ = 0;
+//
+////        Log.d("hey-Length",String.valueOf(data[0].length));
+//
+//        for(int j=0;j<data[0].length;j++)
+//        {
+//            meanX = meanX + data[0][j];
+//            meanY = meanY + data[1][j];
+//            meanZ = meanZ + data[2][j];
+////            Log.d("hey-valZ",String.valueOf(data[2][j]));
+//        }
+//        meanX = meanX/data[0].length;
+//        meanY = meanY/data[0].length;
+//        meanZ = meanZ/data[0].length;
+//
+//        Log.d("hey-mean",String.valueOf(meanX)+" "+String.valueOf(meanY)+" "+String.valueOf(meanZ));
+//        double power =2;
+//        for(int j=0;j<data[0].length;j++)
+//        {
+//            VarX = VarX + (data[0][j]-meanX)*(data[0][j]-meanX);
+//            VarY = VarY + (data[1][j]-meanY)*(data[1][j]-meanY);
+//            VarZ = VarZ + (data[2][j]-meanZ)*(data[2][j]-meanZ);
+//        }
+//
+//        VarX = (float)Math.sqrt(VarX/data[0].length);
+//        VarY = (float)Math.sqrt(VarY/data[0].length);
+//        VarZ = (float)Math.sqrt(VarZ/data[0].length);
+//
+//        Log.d("hey-Var",String.valueOf(VarX)+" "+String.valueOf(VarY)+" "+String.valueOf(VarZ));
         for(int j=0;j<data[0].length;j++)
         {
-            meanX = meanX + data[0][j];
-            meanY = meanY + data[1][j];
-            meanZ = meanZ + data[2][j];
-        }
-        meanX = meanX/data[0].length;
-        meanY = meanY/data[0].length;
-        meanZ = meanZ/data[0].length;
-
-        double power =2;
-        for(int j=0;j<data[0].length;j++)
-        {
-            VarX = VarX + (float)Math.pow(data[0][j]-meanX,power);
-            VarY = VarY + (float)Math.pow(data[1][j]-meanY,power);
-            VarZ = VarZ + (float)Math.pow(data[2][j]-meanZ,power);
+            norData[0][j] = (data[0][j]);
+            norData[1][j] = (data[1][j]);
+            norData[2][j] = (data[2][j]);
         }
 
-        VarX = (float)Math.sqrt(VarX/data[0].length);
-        VarY = (float)Math.sqrt(VarY/data[0].length);
-        VarZ = (float)Math.sqrt(VarZ/data[0].length);
-
-        for(int j=0;j<data[0].length;j++)
-        {
-            norData[0][j] = (data[0][j] - meanX)/VarX;
-            norData[1][j] = (data[1][j] - meanY)/VarY;
-            norData[2][j] = (data[2][j] - meanZ)/VarZ;
-        }
-
+//        Log.d("hey-mean",String.valueOf(meanX)+" "+String.valueOf(meanY)+" "+String.valueOf(meanZ));
         return norData;
     }
 

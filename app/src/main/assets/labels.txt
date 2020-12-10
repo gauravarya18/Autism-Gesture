@@ -1,5 +1,3 @@
-ByeBye
-Eight
-LineX
-LineY
-Spiral
+X1
+Y1
+Z1

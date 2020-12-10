@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.gesture.Gesture;
+import android.util.Log;
 
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -19,6 +20,7 @@ public class CacheManager extends SQLiteOpenHelper {
     private static final String XCol= "Col1";
     private static final String YCol = "Col2";
     private static final String ZCol = "Col3";
+
 
     private static final String tableNameCSV = "CSVFile";
 
@@ -161,12 +163,15 @@ public class CacheManager extends SQLiteOpenHelper {
         int len=0;
         try {
             while (cursor.moveToNext()) {
-                if(cursor.getString(0).matches(s))
+                if(cursor.getString(0).matches(s)) {
                     len++;
+//                    Log.d("hey-z",cursor.getString(0)+" "+cursor.getString(3));
+                }
             }
         } finally {
 
         }
+        Log.d("hey-Cursor-length",String.valueOf(len));
 //        for(cursor.moveToLast();;)
 //        {
 //            if(cursor.getString(0).matches(s)) {
@@ -179,20 +184,41 @@ public class CacheManager extends SQLiteOpenHelper {
 
         float[][] Data = new float[3][len];
         int i=0;
-        for(cursor.moveToLast();;)
-        {
-            if(i==len)
-                break;
+//        for(cursor.moveToLast();;)
+//        {
+//            if(i==len)
+//                break;
+//
+//
+//                if (cursor.getString(0).matches(s)) {
+//                    Data[0][i] = Float.parseFloat(cursor.getString(1));
+//                    Data[1][i] = Float.parseFloat(cursor.getString(2));
+//                    Data[2][i] = Float.parseFloat(cursor.getString(3));
+//                    Log.d("hey-zzzzzzz",String.valueOf(i)+" " + cursor.getString(3));
+//                }
+//
+//            if(!cursor.moveToPrevious())
+//                break;
+//            i=i+1;
+//        }
 
-            if(cursor.getString(0).matches(s)) {
-                Data[0][i] = Float.parseFloat(cursor.getString(1));
-                Data[1][i] = Float.parseFloat(cursor.getString(2));
-                Data[2][i] = Float.parseFloat(cursor.getString(3));
+        cursor=this.getData(db,index);
+        try {
+            while (cursor.moveToNext()) {
+                if(cursor.getString(0).matches(s)) {
+                    Data[0][i] = Float.parseFloat(cursor.getString(1));
+                    Data[1][i] = Float.parseFloat(cursor.getString(2));
+                    Data[2][i] = Float.parseFloat(cursor.getString(3));
+//                    Log.d("hey-zzzzzzz",String.valueOf(i)+" " + cursor.getString(1)+" "+cursor.getString(2)+" "+ cursor.getString(3));
+                    i=i+1;
+                }
             }
-            if(!cursor.moveToPrevious())
-                break;
-            i=i+1;
+        } finally {
+                cursor.close();
         }
+
+
+
         return Data;
     }
     public void afterSync(int index)
