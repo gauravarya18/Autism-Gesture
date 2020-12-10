@@ -1,5 +1,7 @@
 package com.example.gesturerecognition;
 
+import android.content.Context;
+
 import java.util.List;
 
 public interface Classifier {
@@ -64,5 +66,7 @@ public interface Classifier {
 
     List<Recognition> recognizeGesture(float[][][][] data);
 
+    int gestureRecognitionModel(float[][][][] data, Context ctx,Boolean isGyro);
+    
     void close();
 }

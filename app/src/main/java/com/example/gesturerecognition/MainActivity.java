@@ -113,7 +113,13 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                     obj.setType(Integer.parseInt(nextLine[0]));
                     obj.setX(Float.parseFloat(nextLine[1]));
                     obj.setY(Float.parseFloat(nextLine[2]));
-                    obj.setZ(Float.parseFloat(nextLine[3]));
+                    if(Integer.parseInt(nextLine[0])==2) {
+                        obj.setZ(Float.parseFloat(nextLine[3])-10);
+                    }
+                    else
+                    {
+                        obj.setZ(Float.parseFloat(nextLine[3]));
+                    }
                     cacheManager.addEntry(obj,1);
 
                 }
@@ -236,6 +242,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                 obj.setX(Float.parseFloat(nextLine[1]));
                 obj.setY(Float.parseFloat(nextLine[2]));
                 obj.setZ(Float.parseFloat(nextLine[3]));
+
                 cacheManager.addEntry(obj,1);
 
             }
@@ -308,6 +315,31 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 //        }
 
     }
+
+    private String getModelResults(float[][] data,Boolean isGyro)
+    {
+        float [][][][]  AccData = transpose(data);
+        int[] Ans = new int[labelList.size()+1];
+        for(int i=0;i<AccData.length;i++)
+        {
+            float[][][][] Data = new float[1][frameSize][3][1];
+            Data[0]=AccData[i];
+            int x = classifierAcc.gestureRecognitionModel(Data,this,isGyro);
+            Ans[x]+=1;
+            Log.d("hey_resultsQuant",String.valueOf(i)+" "+String.valueOf(x));
+        }
+
+        String ans="";
+        for(int i=0;i<labelList.size();i++)
+        {
+            double  d= (Ans[i]*100.0/AccData.length);
+            float f = typeCasting(d);
+            Log.d("hey",String.valueOf(i)+" "+String.valueOf(f));
+            ans = ans + labelList.get(i) + "- " + String.valueOf(f)+"%" + "\n";
+        }
+
+        return ans;
+    }
     public  void recognition()
     {
         Recognition_Gyro = cacheManager.getTestingData("1",0);
@@ -315,8 +347,11 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         cacheManager.afterSync(0);
 
 
-        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose((Recognition_Acc)));
-        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose((Recognition_Gyro)));
+//        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose((Recognition_Acc)));
+//        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose((Recognition_Gyro)));
+
+        String resultsAcc = getModelResults(Recognition_Acc,false);
+        String resultsGyro = getModelResults(Recognition_Gyro,true);
 
 
         final DTW xx= new DTW();
@@ -380,8 +415,8 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 //        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose(normalize(Recognition_Acc)));
 //        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose(normalize(Recognition_Gyro)));
 
-        tv_gyro.setText(results_gyro + "\n" + resultsGyro.toString());
-        tv_acc.setText(results_acc + "\n" + results.toString());
+        tv_gyro.setText(results_gyro + "\n" + resultsGyro);
+        tv_acc.setText(results_acc + "\n" + resultsAcc);
 
     }
     Float typeCasting(double d)
@@ -401,24 +436,36 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
         Recognition_Gyro = cacheManager.getTestingData("1",0);
         Recognition_Acc = cacheManager.getTestingData("2",0);
-//        cacheManager.afterSync(0);
+        cacheManager.afterSync(0);
 
 
-//        float [][][][]  AccData = transpose(Recognition_Acc);
-//        for(int i=0;i<AccData.length;i++)
-//        {
-//            float[][][][] Data = new float[1][frameSize][3][1];
-//            Data[0]=AccData[i];
-//            final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(((Data)));
-//            Log.d("hey_resultsQuant",String.valueOf(i)+" "+results.toString());
-//        }
-        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose((Recognition_Acc)));
-        tv_acc.setText(results.toString());
-//        classifierAcc.close();
+        float [][][][]  AccData = transpose(Recognition_Acc);
+        int[] Ans = new int[labelList.size()+1];
+        for(int i=0;i<AccData.length;i++)
+        {
+            float[][][][] Data = new float[1][frameSize][3][1];
+            Data[0]=AccData[i];
+            int x = classifierAcc.gestureRecognitionModel(Data,this,false);
+            Ans[x]+=1;
+            Log.d("hey_resultsQuant",String.valueOf(i)+" "+String.valueOf(x));
+        }
 
-
-        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose((Recognition_Gyro)));
-        tv_gyro.setText(resultsGyro.toString());
+        String ans="";
+        for(int i=0;i<labelList.size();i++)
+        {
+            double  f= (Ans[i]*100.0/AccData.length);
+            Log.d("hey",String.valueOf(i)+" "+String.valueOf(f));
+            ans = ans + labelList.get(i) + "- " + String.valueOf(f)+"%" + "\n";
+        }
+        tv_acc.setText(ans);
+        Log.d("hey_final",String.valueOf(Ans[0])+"    "+ String.valueOf(Ans[1])+"    "+String.valueOf(Ans[2]));
+//        final List<Classifier.Recognition> results = classifierAcc.recognizeGesture(transpose((Recognition_Acc)));
+//        tv_acc.setText(results.toString());
+////        classifierAcc.close();
+//
+//
+//        final List<Classifier.Recognition> resultsGyro = classifierGyro.recognizeGesture(transpose((Recognition_Gyro)));
+//        tv_gyro.setText(resultsGyro.toString());
 //        classifierGyro.close();
 
 

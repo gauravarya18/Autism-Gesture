@@ -209,7 +209,7 @@ public class CacheManager extends SQLiteOpenHelper {
                     Data[0][i] = Float.parseFloat(cursor.getString(1));
                     Data[1][i] = Float.parseFloat(cursor.getString(2));
                     Data[2][i] = Float.parseFloat(cursor.getString(3));
-//                    Log.d("hey-zzzzzzz",String.valueOf(i)+" " + cursor.getString(1)+" "+cursor.getString(2)+" "+ cursor.getString(3));
+                    Log.d("hey-zzzzzzz",String.valueOf(i)+" " + cursor.getString(1)+" "+cursor.getString(2)+" "+ cursor.getString(3));
                     i=i+1;
                 }
             }

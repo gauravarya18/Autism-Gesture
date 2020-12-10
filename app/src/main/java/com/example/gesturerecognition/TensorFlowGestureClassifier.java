@@ -1,17 +1,27 @@
 package com.example.gesturerecognition;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.util.Log;
 
+import com.example.gesturerecognition.ml.ModelAcc;
+import com.example.gesturerecognition.ml.ModelAcc4;
+import com.example.gesturerecognition.ml.ModelGyro4;
+
+import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.nnapi.NnApiDelegate;
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -38,11 +48,72 @@ public class TensorFlowGestureClassifier implements Classifier {
                              String labelPath) throws IOException {
 
         TensorFlowGestureClassifier classifier = new TensorFlowGestureClassifier();
-        classifier.interpreter = new Interpreter(classifier.loadModelFile(assetManager, modelPath), new Interpreter.Options());
+//        classifier.interpreter = new Interpreter(classifier.loadModelFile(assetManager, modelPath), new Interpreter.Options());
         classifier.labelList = classifier.loadLabelList(assetManager, labelPath);
 
 
         return classifier;
+    }
+
+    private float[] makeSingleDimension(float[][][][] Data)
+    {
+        float[] res = new float[240];
+        for(int i=0;i<80;i++)
+        {
+            for(int j=0;j<3;j++)
+            {
+                res[j*80+i]=Data[0][i][j][0];
+            }
+        }
+        return res;
+    }
+
+
+    @Override
+    public int gestureRecognitionModel(float[][][][] data, Context ctx,Boolean isGyro) {
+
+
+        if(isGyro)
+        {
+            try {
+                ModelGyro4 model = ModelGyro4.newInstance(ctx);
+
+                // Creates inputs for reference.
+                TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 80, 3, 1}, DataType.FLOAT32);
+//            inputFeature0.loadBuffer(data);
+                inputFeature0.loadArray(makeSingleDimension(data));
+                // Runs model inference and gets result.
+                ModelGyro4.Outputs outputs = model.process(inputFeature0);
+                TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
+                float res[] = outputFeature0.getFloatArray();
+                // Releases model resources if no longer used.
+                model.close();
+                return getMaximumIndex(res);
+            } catch (IOException e) {
+                // TODO Handle the exception
+            }
+        }
+        else {
+            try {
+                ModelAcc4 model = ModelAcc4.newInstance(ctx);
+
+                // Creates inputs for reference.
+                TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 80, 3, 1}, DataType.FLOAT32);
+//            inputFeature0.loadBuffer(data);
+                inputFeature0.loadArray(makeSingleDimension(data));
+                // Runs model inference and gets result.
+                ModelAcc4.Outputs outputs = model.process(inputFeature0);
+                TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
+                float res[] = outputFeature0.getFloatArray();
+                // Releases model resources if no longer used.
+                model.close();
+                return getMaximumIndex(res);
+            } catch (IOException e) {
+                // TODO Handle the exception
+            }
+        }
+            return labelList.size();
+
     }
 
     @Override
@@ -94,14 +165,14 @@ public class TensorFlowGestureClassifier implements Classifier {
         int ans=-1;
         for(int i=0;i<d.length;i++)
         {
-//            Log.d("hey_score",String.valueOf(d[i]));
+            Log.d("hey_score",String.valueOf(d[i]));
             if(score<d[i])
             {
                 score=d[i];
                 ans=i;
             }
         }
-//        Log.d("hey_score","break");
+        Log.d("hey_score","break");
         return ans;
     }
     @Override
