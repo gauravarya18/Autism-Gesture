@@ -72,8 +72,8 @@
 
     <TextView
         android:id="@+id/results_gyro"
-        android:layout_width="182dp"
-        android:layout_height="154dp"
+        android:layout_width="183dp"
+        android:layout_height="225dp"
         android:text="Gyro"
         android:textAlignment="center"
         android:textSize="12sp"
@@ -84,16 +84,14 @@
 
     <TextView
         android:id="@+id/results_acc"
-        android:layout_width="182dp"
-        android:layout_height="154dp"
+        android:layout_width="187dp"
+        android:layout_height="221dp"
         android:layout_marginEnd="17dp"
         android:text="Acc"
         android:textAlignment="center"
         android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@+id/filename"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/results_gyro"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.454" />
 

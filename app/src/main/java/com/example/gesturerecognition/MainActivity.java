@@ -57,20 +57,21 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
     float[][] Recognition_Gyro = new float[3][];
     float[][][] Training_Acc;
     float[][] Recognition_Acc = new float[3][];
-    float[][] Shapes_score = new float[2][2];
-
+    float[] Shapes_score_Acc;
+    float[] Shapes_score_Gyro;
 
     private static final String MODEL_PATH_GYRO = "model_Gyro.tflite";
     private static final String MODEL_PATH_ACC = "modelAcc.tflite";
     private static final String LABEL_PATH = "labels.txt";
 
+    private static final String LABEL_PATH_Gyro = "labelsGyro.txt";
     private Classifier classifierAcc;
     private Classifier classifierGyro;
     private Executor executor = Executors.newSingleThreadExecutor();
     int frameSize =80;
     int hopSize =40;
-    private List<String> labelList;
-
+    private List<String> labelListAcc;
+    private List<String> labelListGyro;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,7 +84,15 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         tv_gyro = findViewById(R.id.results_gyro);
 
         try {
-            labelList = loadLabelList(getAssets(), LABEL_PATH);
+            labelListAcc = loadLabelList(getAssets(), LABEL_PATH);
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        try {
+            labelListGyro = loadLabelList(getAssets(), LABEL_PATH_Gyro);
         }
         catch (IOException e)
         {
@@ -113,13 +122,8 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                     obj.setType(Integer.parseInt(nextLine[0]));
                     obj.setX(Float.parseFloat(nextLine[1]));
                     obj.setY(Float.parseFloat(nextLine[2]));
-                    if(Integer.parseInt(nextLine[0])==2) {
-                        obj.setZ(Float.parseFloat(nextLine[3])-10);
-                    }
-                    else
-                    {
-                        obj.setZ(Float.parseFloat(nextLine[3]));
-                    }
+                    obj.setZ(Float.parseFloat(nextLine[3]));
+
                     cacheManager.addEntry(obj,1);
 
                 }
@@ -183,7 +187,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
         sensorManager.registerListener(MainActivity.this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
-        sensorManager.registerListener(MainActivity.this, gyroscope, SensorManager.SENSOR_DELAY_NORMAL);
+        sensorManager.registerListener(MainActivity.this, gyroscope, SensorManager.SENSOR_DELAY_GAME);
 
 
     }
@@ -318,6 +322,16 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
     private String getModelResults(float[][] data,Boolean isGyro)
     {
+        List<String> labelList;
+        if(isGyro)
+        {
+            labelList = labelListGyro;
+        }
+        else
+        {
+            labelList = labelListAcc;
+        }
+
         float [][][][]  AccData = transpose(data);
         int[] Ans = new int[labelList.size()+1];
         for(int i=0;i<AccData.length;i++)
@@ -357,15 +371,22 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         final DTW xx= new DTW();
         Double DTW_score_gyro ;
         Double DTW_score_acc ;
-        List<String> Shapes;
+        List<String> ShapesAcc;
+        List<String> ShapesGyro;
+
         if(st.isChecked()) {
-            Shapes = labelList;
+            ShapesAcc = labelListAcc;
+            ShapesGyro = labelListGyro;
         }
         else
         {
-            Shapes = cacheManager.getAllGestures();
+            ShapesAcc = cacheManager.getAllGestures();
+            ShapesGyro = cacheManager.getAllGestures();
         }
-        Shapes_score = new float[Shapes.size()][2];
+
+        Shapes_score_Acc = new float[ShapesAcc.size()];
+        Shapes_score_Gyro = new float[ShapesGyro.size()];
+
         String results_gyro="";
         String results_acc="";
 
@@ -373,38 +394,47 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         int indexForMinGyro = 0;
         float minAcc = 10000;
         int indexForMinAcc = 0;
-        for(int  j=0;j<Shapes.size();j++) {
 
-//            for (int i = 0; i < 3; i++) {
+        for(int  j=0;j<ShapesAcc.size();j++) {
 
-                DTW_score_gyro = xx.compute(Recognition_Gyro, Training_Gyro[j]).getDistance();
-                DTW_score_acc = xx.compute(Recognition_Acc, Training_Acc[j]).getDistance();
-//            }
-                Shapes_score[j][0] = typeCasting(DTW_score_gyro);
-                Shapes_score[j][1] = typeCasting(DTW_score_acc);
+                DTW_score_acc = xx.compute((Recognition_Acc), (Training_Acc[j])).getDistance();
+                Shapes_score_Acc[j] = typeCasting(DTW_score_acc);
+                results_acc = results_acc + ShapesAcc.get(j) + " " + String.format("%.4f ", Shapes_score_Acc[j]) + "\n";
 
-                results_gyro = results_gyro + Shapes.get(j) + " " + String.format("%.4f ", Shapes_score[j][0]) + "\n";
-                results_acc = results_acc + Shapes.get(j) + " " + String.format("%.4f ", Shapes_score[j][1]) + "\n";
-
-                if (Shapes_score[j][0] < minGyro) {
-                    minGyro = Shapes_score[j][0];
-                    indexForMinGyro = j;
-                }
-
-                if (Shapes_score[j][1] < minAcc) {
-                    minAcc = Shapes_score[j][1];
+                if (Shapes_score_Acc[j] < minAcc) {
+                    minAcc = Shapes_score_Acc[j];
                     indexForMinAcc = j;
                 }
 
         }
 
-        if(Shapes.size()!=0) {
-            results_gyro = results_gyro + "Min :: " + Shapes.get(indexForMinGyro);
-            results_acc = results_acc + "Min :: " + Shapes.get(indexForMinAcc);
+        if(ShapesAcc.size()!=0) {
+            results_acc = results_acc + "Min :: " + ShapesAcc.get(indexForMinAcc);
         }
         else
         {
             results_acc = "No Data";
+        }
+
+
+        for(int  j=0;j<ShapesGyro.size();j++) {
+            DTW_score_gyro = xx.compute((Recognition_Gyro), (Training_Gyro[j])).getDistance();
+            Shapes_score_Gyro[j] = typeCasting(DTW_score_gyro);
+
+
+            results_gyro = results_gyro + ShapesGyro.get(j) + " " + String.format("%.4f ", Shapes_score_Gyro[j]) + "\n";
+            if (Shapes_score_Gyro[j] < minGyro) {
+                minGyro = Shapes_score_Gyro[j];
+                indexForMinGyro = j;
+            }
+
+        }
+
+        if(ShapesGyro.size()!=0) {
+            results_gyro = results_gyro + "Min :: " + ShapesGyro.get(indexForMinGyro);
+        }
+        else
+        {
             results_gyro = "No Data";
         }
 
@@ -440,7 +470,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
 
         float [][][][]  AccData = transpose(Recognition_Acc);
-        int[] Ans = new int[labelList.size()+1];
+        int[] Ans = new int[labelListAcc.size()+1];
         for(int i=0;i<AccData.length;i++)
         {
             float[][][][] Data = new float[1][frameSize][3][1];
@@ -451,11 +481,11 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         }
 
         String ans="";
-        for(int i=0;i<labelList.size();i++)
+        for(int i=0;i<labelListAcc.size();i++)
         {
             double  f= (Ans[i]*100.0/AccData.length);
             Log.d("hey",String.valueOf(i)+" "+String.valueOf(f));
-            ans = ans + labelList.get(i) + "- " + String.valueOf(f)+"%" + "\n";
+            ans = ans + labelListAcc.get(i) + "- " + String.valueOf(f)+"%" + "\n";
         }
         tv_acc.setText(ans);
         Log.d("hey_final",String.valueOf(Ans[0])+"    "+ String.valueOf(Ans[1])+"    "+String.valueOf(Ans[2]));
@@ -570,25 +600,28 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         @Override
         protected Void doInBackground(Void... args) {
             // do background work here
-            List<String> Shapes;
+            List<String> ShapesAcc;
+            List<String> ShapesGyro;
             if(checked) {
-                 Shapes = labelList;
+                 ShapesAcc = labelListAcc;
+                 ShapesGyro = labelListGyro;
             }
             else
             {
-                Shapes = cacheManager.getAllGestures();
+                ShapesAcc = cacheManager.getAllGestures();
+                ShapesGyro =cacheManager.getAllGestures();
             }
-            Training_Gyro = new float[Shapes.size()][3][];
-            Training_Acc = new float[Shapes.size()][3][];
+
+            Training_Gyro = new float[ShapesGyro.size()][3][];
+            Training_Acc = new float[ShapesAcc.size()][3][];
             int minAccLength = 1000000;
             int minGyroLength = 1000000;
 
             if(checked)
             {
-                for (int i = 0; i < Shapes.size(); i++) {
+                for (int i = 0; i < ShapesAcc.size(); i++) {
 
-                        load(Shapes.get(i), false);
-                        Training_Gyro[i] = cacheManager.getTestingData("1", 1);
+                        load(ShapesAcc.get(i), false);
                         Training_Acc[i] = cacheManager.getTestingData("2", 1);
 
                         if(Training_Acc[i][0].length<minAccLength)
@@ -596,33 +629,29 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                             minAccLength = Training_Acc[i][0].length;
                         }
 
-                        if(Training_Gyro[i][0].length<minGyroLength)
-                        {
-                            minGyroLength = Training_Gyro[i][0].length;
-                        }
-
                         cacheManager.afterSync(1);
 
                 }
 
-//                  Specially for GyroFiles !!
-//                for (int i = 0; i < Shapes.size(); i++) {
-//
-//                        load(Shapes.get(i), true);
-//                        Training_Gyro[i] = cacheManager.getTestingData("1", 1);
-//                        if(Training_Gyro[i][0].length<minGyroLength)
-//                        {
-//                            minGyroLength = Training_Gyro[i][0].length;
-//                        }
-//                        cacheManager.afterSync(1);
-//
-//                }
+                for (int i = 0; i < ShapesGyro.size(); i++) {
+
+                    load(ShapesGyro.get(i), false);
+                    Training_Gyro[i] = cacheManager.getTestingData("1", 1);
+
+                    if(Training_Gyro[i][0].length<minGyroLength)
+                    {
+                        minGyroLength = Training_Gyro[i][0].length;
+                    }
+
+                    cacheManager.afterSync(1);
+
+                }
 
                 Log.d("hey",String.valueOf(minAccLength)+" "+String.valueOf(minGyroLength));
-                float [][][] tempAcc =  new float[Shapes.size()][3][minAccLength];
-                float [][][] tempGyro =  new float[Shapes.size()][3][minGyroLength];
+                float [][][] tempAcc =  new float[ShapesAcc.size()][3][minAccLength];
+                float [][][] tempGyro =  new float[ShapesGyro.size()][3][minGyroLength];
 
-                for(int i=0;i<Shapes.size();i++)
+                for(int i=0;i<ShapesAcc.size();i++)
                 {
                     for(int j=0;j<minAccLength;j++)
                     {
@@ -633,7 +662,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                     }
                 }
 
-                for(int i=0;i<Shapes.size();i++)
+                for(int i=0;i<ShapesGyro.size();i++)
                 {
                     for(int j=0;j<minGyroLength;j++)
                     {
@@ -644,20 +673,28 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
                     }
                 }
 
-                Training_Gyro = new float[Shapes.size()][3][];
-                Training_Acc = new float[Shapes.size()][3][];
+                Training_Gyro = new float[ShapesGyro.size()][3][];
+                Training_Acc = new float[ShapesAcc.size()][3][];
 
-                for(int i=0;i<Shapes.size();i++)
+                for(int i=0;i<ShapesAcc.size();i++)
                 {
-                    Training_Gyro[i]=tempGyro[i];
                     Training_Acc[i]=tempAcc[i];
                 }
 
+                for(int i=0;i<ShapesGyro.size();i++)
+                {
+                    Training_Gyro[i]=tempGyro[i];
+                }
+
+
+
+
+
             }
             else {
-                for (int i = 0; i < Shapes.size(); i++) {
+                for (int i = 0; i < ShapesAcc.size(); i++) {
 
-                        CSVReader("Test"+Shapes.get(i));
+                        CSVReader("Test"+ShapesAcc.get(i));
                         Training_Gyro[i] = cacheManager.getTestingData("1", 1);
                         Training_Acc[i] = cacheManager.getTestingData("2", 1);
                         cacheManager.afterSync(1);
@@ -735,46 +772,46 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 //        data = removeStartingAndEnding(data);
 
         float[][] norData = new float[data.length][data[0].length];
-//        float meanX = 0;
-//        float meanY = 0;
-//        float meanZ = 0;
-//
-//        float VarX = 0;
-//        float VarY = 0;
-//        float VarZ = 0;
-//
-////        Log.d("hey-Length",String.valueOf(data[0].length));
-//
-//        for(int j=0;j<data[0].length;j++)
-//        {
-//            meanX = meanX + data[0][j];
-//            meanY = meanY + data[1][j];
-//            meanZ = meanZ + data[2][j];
-////            Log.d("hey-valZ",String.valueOf(data[2][j]));
-//        }
-//        meanX = meanX/data[0].length;
-//        meanY = meanY/data[0].length;
-//        meanZ = meanZ/data[0].length;
-//
-//        Log.d("hey-mean",String.valueOf(meanX)+" "+String.valueOf(meanY)+" "+String.valueOf(meanZ));
-//        double power =2;
-//        for(int j=0;j<data[0].length;j++)
-//        {
-//            VarX = VarX + (data[0][j]-meanX)*(data[0][j]-meanX);
-//            VarY = VarY + (data[1][j]-meanY)*(data[1][j]-meanY);
-//            VarZ = VarZ + (data[2][j]-meanZ)*(data[2][j]-meanZ);
-//        }
-//
-//        VarX = (float)Math.sqrt(VarX/data[0].length);
-//        VarY = (float)Math.sqrt(VarY/data[0].length);
-//        VarZ = (float)Math.sqrt(VarZ/data[0].length);
-//
-//        Log.d("hey-Var",String.valueOf(VarX)+" "+String.valueOf(VarY)+" "+String.valueOf(VarZ));
+        float meanX = 0;
+        float meanY = 0;
+        float meanZ = 0;
+
+        float VarX = 0;
+        float VarY = 0;
+        float VarZ = 0;
+
+//        Log.d("hey-Length",String.valueOf(data[0].length));
+
         for(int j=0;j<data[0].length;j++)
         {
-            norData[0][j] = (data[0][j]);
-            norData[1][j] = (data[1][j]);
-            norData[2][j] = (data[2][j]);
+            meanX = meanX + data[0][j];
+            meanY = meanY + data[1][j];
+            meanZ = meanZ + data[2][j];
+//            Log.d("hey-valZ",String.valueOf(data[2][j]));
+        }
+        meanX = meanX/data[0].length;
+        meanY = meanY/data[0].length;
+        meanZ = meanZ/data[0].length;
+
+        Log.d("hey-mean",String.valueOf(meanX)+" "+String.valueOf(meanY)+" "+String.valueOf(meanZ));
+        double power =2;
+        for(int j=0;j<data[0].length;j++)
+        {
+            VarX = VarX + (data[0][j]-meanX)*(data[0][j]-meanX);
+            VarY = VarY + (data[1][j]-meanY)*(data[1][j]-meanY);
+            VarZ = VarZ + (data[2][j]-meanZ)*(data[2][j]-meanZ);
+        }
+
+        VarX = (float)Math.sqrt(VarX/data[0].length);
+        VarY = (float)Math.sqrt(VarY/data[0].length);
+        VarZ = (float)Math.sqrt(VarZ/data[0].length);
+
+        Log.d("hey-Var",String.valueOf(VarX)+" "+String.valueOf(VarY)+" "+String.valueOf(VarZ));
+        for(int j=0;j<data[0].length;j++)
+        {
+            norData[0][j] = (data[0][j]-meanX)/VarX;
+            norData[1][j] = (data[1][j]-meanY)/VarY;
+            norData[2][j] = (data[2][j]-meanZ)/VarZ;
         }
 
 //        Log.d("hey-mean",String.valueOf(meanX)+" "+String.valueOf(meanY)+" "+String.valueOf(meanZ));
