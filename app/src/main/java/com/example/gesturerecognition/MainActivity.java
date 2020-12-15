@@ -334,24 +334,24 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
         float [][][][]  AccData = transpose(data);
         int[] Ans = new int[labelList.size()+1];
-        for(int i=0;i<AccData.length;i++)
-        {
-            float[][][][] Data = new float[1][frameSize][3][1];
-            Data[0]=AccData[i];
-            int x = classifierAcc.gestureRecognitionModel(Data,this,isGyro);
-            Ans[x]+=1;
-            Log.d("hey_resultsQuant",String.valueOf(i)+" "+String.valueOf(x));
-        }
-
         String ans="";
-        for(int i=0;i<labelList.size();i++)
-        {
-            double  d= (Ans[i]*100.0/AccData.length);
-            float f = typeCasting(d);
-            Log.d("hey",String.valueOf(i)+" "+String.valueOf(f));
-            ans = ans + labelList.get(i) + "- " + String.valueOf(f)+"%" + "\n";
-        }
+        if(AccData!=null && AccData.length>0) {
+            for (int i = 0; i < AccData.length; i++) {
+                float[][][][] Data = new float[1][frameSize][3][1];
+                Data[0] = AccData[i];
+                int x = classifierAcc.gestureRecognitionModel(Data, this, isGyro);
+                Ans[x] += 1;
+                Log.d("hey_resultsQuant", String.valueOf(i) + " " + String.valueOf(x));
+            }
 
+
+            for (int i = 0; i < labelList.size(); i++) {
+                double d = (Ans[i] * 100.0 / AccData.length);
+                float f = typeCasting(d);
+                Log.d("hey", String.valueOf(i) + " " + String.valueOf(f));
+                ans = ans + labelList.get(i) + "- " + String.valueOf(f) + "%" + "\n";
+            }
+        }
         return ans;
     }
     public  void recognition()
@@ -397,7 +397,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
         for(int  j=0;j<ShapesAcc.size();j++) {
 
-                DTW_score_acc = xx.compute((Recognition_Acc), (Training_Acc[j])).getDistance();
+                DTW_score_acc = xx.compute((Recognition_Acc), makeLengthSame(Recognition_Acc,Training_Acc[j])).getDistance();
                 Shapes_score_Acc[j] = typeCasting(DTW_score_acc);
                 results_acc = results_acc + ShapesAcc.get(j) + " " + String.format("%.4f ", Shapes_score_Acc[j]) + "\n";
 
@@ -418,7 +418,7 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
 
         for(int  j=0;j<ShapesGyro.size();j++) {
-            DTW_score_gyro = xx.compute((Recognition_Gyro), (Training_Gyro[j])).getDistance();
+            DTW_score_gyro = xx.compute((Recognition_Gyro), makeLengthSame(Recognition_Gyro,Training_Gyro[j])).getDistance();
             Shapes_score_Gyro[j] = typeCasting(DTW_score_gyro);
 
 
@@ -448,6 +448,20 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
         tv_gyro.setText(results_gyro + "\n" + resultsGyro);
         tv_acc.setText(results_acc + "\n" + resultsAcc);
 
+    }
+
+    private float[][] makeLengthSame(float[][] ideal, float[][] curr)
+    {
+        float[][] newData= new float[ideal.length][ideal[0].length];
+        for(int i=0;i<ideal.length;i++)
+        {
+            for(int j=0;j<ideal[0].length;j++)
+            {
+                newData[i][j] = curr[i][j];
+            }
+        }
+
+        return newData;
     }
     Float typeCasting(double d)
     {
@@ -501,26 +515,6 @@ public class MainActivity extends AppCompatActivity  implements SensorEventListe
 
 
         OnSyncAction(view);
-
-
-//        float[][] data = new float[3][6];
-//        for(int i=0;i<3;i++)
-//        {
-//            for(int j=0;j<6;j++)
-//            {
-//                data[i][j]=j+1;
-//            }
-//        }
-//
-//        data = normalize(data);
-//
-//        for(int i=0;i<3;i++)
-//        {
-//            for(int j=0;j<6;j++)
-//            {
-//                Log.d("hey_nor",String.valueOf(data[i][j]));
-//            }
-//        }
 
     }
 

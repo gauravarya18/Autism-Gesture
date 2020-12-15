@@ -1,5 +1,10 @@
 package com.example.gesturerecognition;
 
+import android.util.Log;
+
+import static java.lang.Integer.min;
+import static java.lang.Math.max;
+
 public final class DTW {
 
     /** Defines the result for a Dynamic Time Warping operation. */
@@ -65,12 +70,33 @@ public final class DTW {
             lG[0][j] = lL[0][j] + lG[0][j - 1];
         }
 
-        for (i = 1; i < lN; i++) {
-            for (j = 1; j < lM; j++) {
+
+            for (i = 1; i < lN; i++) {
+                for (j = 1; j < lM; j++) {
+                    lG[i][j] = Double.POSITIVE_INFINITY;
+//                Log.d("hey",String.valueOf(lG[i][j]));
+                }
+            }
+
+        int wrappingWindow = lN/6;
+        Log.d("hey_Dtw_window size",String.valueOf(wrappingWindow));
+        for (i = 1; i < lN ; i++) {
+            for (j = Math.max(1,i-wrappingWindow); j < Math.min(lM,i+wrappingWindow) ; j++) {
                 // Accumulate the path.
+//                Log.d("hey_",String.valueOf(i)+ " "+ String.valueOf(j));
                 lG[i][j] = (Math.min(Math.min(lG[i-1][j], lG[i-1][j-1]), lG[i][j-1])) + lL[i][j];
             }
         }
+
+//        for (i = 0; i < lN ; i++) {
+//            String ans ="";
+//            for (j = 0; j < lM; j++) {
+//                // Accumulate the path.
+//                ans = ans + "("+ String.valueOf(i)+String.valueOf(j)+")"+String.valueOf(lG[i][j]) + "  ";
+//            }
+//            Log.d("hey__",ans);
+//        }
+        Log.d("hey_Dtw",String.valueOf(lG[lN-1][lM-1]));
 
         // Update iteration varaibles.
         i = lWarpingPath[lK - 1][0] = (lN - 1);
@@ -104,6 +130,7 @@ public final class DTW {
             }
             // Increment the qualifier.
             lK++;
+//            Log.d("hey_",String.valueOf(i)+ " "+ String.valueOf(j));
             // Update the Warping Path.
             lWarpingPath[lK - 1][0] = i;
             lWarpingPath[lK - 1][1] = j;

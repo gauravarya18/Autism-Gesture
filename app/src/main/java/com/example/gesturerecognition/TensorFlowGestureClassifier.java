@@ -6,10 +6,8 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.util.Log;
 
-import com.example.gesturerecognition.ml.ModelAcc;
+import com.example.gesturerecognition.ml.GyroModel;
 import com.example.gesturerecognition.ml.ModelAcc4;
-import com.example.gesturerecognition.ml.ModelGyro3;
-import com.example.gesturerecognition.ml.ModelGyro4;
 
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
@@ -77,14 +75,14 @@ public class TensorFlowGestureClassifier implements Classifier {
         if(isGyro)
         {
             try {
-                ModelGyro3 model = ModelGyro3.newInstance(ctx);
+                GyroModel model = GyroModel.newInstance(ctx);
 
                 // Creates inputs for reference.
                 TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 80, 3, 1}, DataType.FLOAT32);
 //            inputFeature0.loadBuffer(data);
                 inputFeature0.loadArray(makeSingleDimension(data));
                 // Runs model inference and gets result.
-                ModelGyro3.Outputs outputs = model.process(inputFeature0);
+                GyroModel.Outputs outputs = model.process(inputFeature0);
                 TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
                 float res[] = outputFeature0.getFloatArray();
                 // Releases model resources if no longer used.
