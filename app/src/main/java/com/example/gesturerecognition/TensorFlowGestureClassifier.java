@@ -43,7 +43,6 @@ public class TensorFlowGestureClassifier implements Classifier {
                              String labelPath) throws IOException {
 
         TensorFlowGestureClassifier classifier = new TensorFlowGestureClassifier();
-//        classifier.interpreter = new Interpreter(classifier.loadModelFile(assetManager, modelPath), new Interpreter.Options());
         classifier.labelList = classifier.loadLabelList(assetManager, labelPath);
 
 
