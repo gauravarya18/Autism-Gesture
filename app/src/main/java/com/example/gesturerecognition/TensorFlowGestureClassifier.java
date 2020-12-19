@@ -57,6 +57,7 @@ public class TensorFlowGestureClassifier implements Classifier {
             for(int j=0;j<3;j++)
             {
                 res[j*80+i]=Data[0][i][j][0];
+                
             }
         }
         return res;
