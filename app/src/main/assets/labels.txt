@@ -1,5 +1,4 @@
-Arti
-C
+S1
 X1
 XY
 Y1

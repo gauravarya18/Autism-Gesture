@@ -7,20 +7,16 @@ import android.content.res.AssetManager;
 import android.util.Log;
 
 import com.example.gesturerecognition.ml.GyroModel;
-import com.example.gesturerecognition.ml.ModelAcc4;
+import com.example.gesturerecognition.ml.ModelAcc5;
 
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.nnapi.NnApiDelegate;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -94,14 +90,14 @@ public class TensorFlowGestureClassifier implements Classifier {
         }
         else {
             try {
-                ModelAcc4 model = ModelAcc4.newInstance(ctx);
+                ModelAcc5 model = ModelAcc5.newInstance(ctx);
 
                 // Creates inputs for reference.
                 TensorBuffer inputFeature0 = TensorBuffer.createFixedSize(new int[]{1, 80, 3, 1}, DataType.FLOAT32);
 //            inputFeature0.loadBuffer(data);
                 inputFeature0.loadArray(makeSingleDimension(data));
                 // Runs model inference and gets result.
-                ModelAcc4.Outputs outputs = model.process(inputFeature0);
+                ModelAcc5.Outputs outputs = model.process(inputFeature0);
                 TensorBuffer outputFeature0 = outputs.getOutputFeature0AsTensorBuffer();
                 float res[] = outputFeature0.getFloatArray();
                 // Releases model resources if no longer used.
